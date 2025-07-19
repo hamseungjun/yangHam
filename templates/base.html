@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>양햄이 코딩 스쿨</title>
+    <link href="{{ url_for('static', path='styles.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+</head>
+<body>
+    <div class="sub-header">
+        <div class="sub-header-inner">
+            <a href="#">로그인</a>
+            <a href="#">회원가입</a>
+        </div>
+    </div>
+    
+    <header class="top-nav">
+    <nav>
+        <ul>
+            {% for slug, chapter in chapters.items() %}
+            <li>
+                {% if chapter.problems %}
+                    <a href="/{{ slug }}/1" class="{% if slug == current_chapter_slug %}active{% endif %}">
+                        {{ chapter.chapter_title }}
+                    </a>
+                {% else %}
+                    <a href="#" class="disabled">
+                        {{ chapter.chapter_title }}
+                    </a>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    </nav>
+</header>
+
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
