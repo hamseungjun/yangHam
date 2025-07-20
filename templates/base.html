@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>양햄이 코딩 스쿨</title>
+    <title>{% block title %}양햄이 코딩 스쿨{% endblock %}</title>
+    <link rel="icon" href="{{ url_for('static', path='images/favicon.ico') }}">
     <link href="{{ url_for('static', path='styles.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
@@ -11,30 +12,45 @@
 <body>
     <div class="sub-header">
         <div class="sub-header-inner">
-            <a href="#">로그인</a>
-            <a href="#">회원가입</a>
+            {% if user %}
+                <span>
+                    환영합니다, <strong>{{ user.username }}</strong>님!
+                    {% if rank_info %}
+                    <img src="{{ url_for('static', path='images/' + rank_info.image) }}" alt="{{ rank_info.name }}" class="rank-icon">
+                    {% endif %}
+                </span>
+                <a href="/mypage">마이페이지</a>
+                <form action="/logout" method="post" style="display: inline;">
+                    <button type="submit" class="logout-button">로그아웃</button>
+                </form>
+            {% else %}
+                <a href="/login">로그인</a>
+                <a href="/signup">회원가입</a>
+            {% endif %}
         </div>
     </div>
-    
     <header class="top-nav">
-    <nav>
-        <ul>
-            {% for slug, chapter in chapters.items() %}
-            <li>
-                {% if chapter.problems %}
-                    <a href="/{{ slug }}/1" class="{% if slug == current_chapter_slug %}active{% endif %}">
-                        {{ chapter.chapter_title }}
-                    </a>
-                {% else %}
-                    <a href="#" class="disabled">
-                        {{ chapter.chapter_title }}
-                    </a>
-                {% endif %}
-            </li>
-            {% endfor %}
-        </ul>
-    </nav>
-</header>
+        <a href="/" class="logo-link">
+            <img src="{{ url_for('static', path='images/final_logo.png') }}" alt="양햄이 코딩스쿨 로고" class="logo">
+        </a>
+        <nav>
+            <ul>
+                {% for slug, chapter in chapters.items() %}
+                <li>
+                    {% if chapter.problems %}
+                        <a href="/{{ slug }}/1" class="{% if slug == current_chapter_slug %}active{% endif %}">
+                            {{ chapter.chapter_title }}
+                        </a>
+                    {% else %}
+                        <a href="#" class="disabled">
+                            {{ chapter.chapter_title }}
+                        </a>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </nav>
+    </header>
 
     <div class="container">
         {% block content %}{% endblock %}

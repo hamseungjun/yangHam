@@ -2,10 +2,10 @@
 
 {% block content %}
 <aside class="theory-sidebar">
-    <h2>
+    <h3>
          핵심 이론
         <button id="theory-toggle-btn" class="theory-toggle">▼</button>
-    </h2>
+    </h3>
     <div id="theory-content" class="theory-content">
         {{ current_problem.theory | safe }}
     </div>
@@ -15,7 +15,7 @@
     <div class="progress-container">
         {% for i in range(1, total_problems + 1) %}
         <a href="/{{ current_chapter_slug }}/{{ i }}" class="progress-step-link">
-            <div class="progress-step" data-step="{{ i }}">
+            <div class="progress-step" data-step-id="{{ (current_chapter.problems | selectattr('problem_number_in_chapter', 'equalto', i) | list | first).id }}">
                 <div class="progress-step-circle">{{ i }}</div>
                 {% if not loop.last %}
                 <div class="progress-step-line"></div>
@@ -26,7 +26,7 @@
     </div>
 
     <div class="problem-header">
-        <h2>{{ current_problem.problem_title }}</h2>
+        <h2>{{ current_problem.title }}</h2>
     </div>
     <p class="question">{{ current_problem.question }}</p>
 
@@ -36,96 +36,70 @@
     
     <div id="interactive-area">
         <div class="button-area">
-            <form id="hint-form" action="/get-hint/{{ current_chapter_slug }}/{{ current_problem.problem_id }}" method="post" style="display: inline;">
-                <input type="hidden" name="user_code" id="hint-user-code">
-                <button type="submit" class="hint-button">힌트 보기 💡</button>
-            </form>
-            <form id="check-form" action="/check-answer/{{ current_chapter_slug }}/{{ current_problem.problem_id }}" method="post" style="display: inline;">
+            <form id="check-form" action="/check-answer/{{ current_chapter_slug }}/{{ current_problem.problem_number_in_chapter }}" method="post">
                 <input type="hidden" name="user_code" id="check-user-code">
                 <button type="submit">정답 확인하기</button>
             </form>
         </div>
         
         {% if feedback %}
-        <div class="feedback result-box">
+        <div class="result-box {{ 'feedback-correct' if is_correct else 'feedback-incorrect' }}">
             <h4>✔️ 정답 확인</h4>
-            <p>{{ feedback.strip() }}</p>
-        </div>
-        {% endif %}
-
-        {% if hint %}
-        <div class="hint result-box">
-            <h4>💡 힌트</h4>
-            <p>{{ hint.strip() }}</p>
+            <p>{{ feedback.strip() | replace('\n', '<br>') | safe }}</p>
         </div>
         {% endif %}
     </div>
 </main>
 {% endblock %}
 
-
 {% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
+        const editorEl = document.getElementById("code-editor");
+        if (!editorEl) return;
+
+        const editor = CodeMirror.fromTextArea(editorEl, {
             lineNumbers: true, mode: "python", theme: "default", indentUnit: 4
         });
 
         document.getElementById("check-form").addEventListener("submit", () => {
             document.getElementById("check-user-code").value = editor.getValue();
         });
-        document.getElementById("hint-form").addEventListener("submit", () => {
-            document.getElementById("hint-user-code").value = editor.getValue();
-        });
         
-        const chapterSlug = "{{ current_chapter_slug }}";
-        const currentProblemId = {{ current_problem.problem_id }};
-        const wasCorrect = {{ is_correct | tojson }};
-        const progressKey = `yanghaemi_progress_${chapterSlug}`;
+        const completedProblems = new Set({{ completed_problems | tojson }});
+        const currentProblemId = {{ current_problem.id }};
 
-        function loadProgress() {
-            const data = localStorage.getItem(progressKey);
-            return data ? JSON.parse(data) : {};
-        }
-
-        function saveProgress(problemId) {
-            const progress = loadProgress();
-            progress[problemId] = true;
-            localStorage.setItem(progressKey, JSON.stringify(progress));
-        }
-        
         function updateProgressBar() {
-            const progress = loadProgress();
             document.querySelectorAll('.progress-step').forEach(stepEl => {
-                const stepId = parseInt(stepEl.dataset.step);
+                const problemDBId = parseInt(stepEl.dataset.stepId);
                 stepEl.classList.remove('active', 'completed');
                 const circle = stepEl.querySelector('.progress-step-circle');
-                if (progress[stepId]) {
+                
+                if (completedProblems.has(problemDBId)) {
                     stepEl.classList.add('completed');
                     circle.innerHTML = '✔';
                 } else {
-                    circle.innerHTML = stepId;
+                    circle.innerHTML = parseInt(stepEl.parentElement.href.split('/').pop());
                 }
-                if (stepId === currentProblemId) {
+                
+                if (problemDBId === currentProblemId) {
                     stepEl.classList.add('active');
                 }
             });
-        }
-
-        if (wasCorrect) {
-            saveProgress(currentProblemId);
         }
         updateProgressBar();
 
         const toggleBtn = document.getElementById('theory-toggle-btn');
         const theoryContent = document.getElementById('theory-content');
-        toggleBtn.addEventListener('click', () => {
-            theoryContent.classList.toggle('open');
-            toggleBtn.textContent = theoryContent.classList.contains('open') ? '▲' : '▼';
-        });
-
+        if (toggleBtn && theoryContent) {
+            toggleBtn.addEventListener('click', () => {
+                theoryContent.classList.toggle('open');
+                toggleBtn.textContent = theoryContent.classList.contains('open') ? '▲' : '▼';
+            });
+        }
+        
         const resultBox = document.querySelector('.result-box');
-        if(resultBox) {
+        if (resultBox) {
             resultBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     });
