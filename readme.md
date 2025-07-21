@@ -49,5 +49,11 @@ pip install -r requirements.txt
 ```bash
 GEMINI_API_KEY="발급받은 키 입력" uvicorn main:app --reload
 
+#window
+ API 키를 환경 변수로 설정합니다.
+$env:GEMINI_API_KEY="발급받은 키 입력"
+ 서버를 실행합니다.
+uvicorn main:app --reload
+
 ```
 #
