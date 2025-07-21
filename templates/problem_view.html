@@ -9,6 +9,22 @@
     <div id="theory-content" class="theory-content">
         {{ current_problem.theory | safe }}
     </div>
+
+    <hr class="sidebar-divider">
+    <div class="tutor-chatbot">
+        <h4>🤖 AI 조교 쌤께 질문하기</h4>
+        <form id="tutor-form" action="/ask-tutor/{{ current_chapter_slug }}/{{ current_problem.problem_number_in_chapter }}" method="post">
+            <textarea name="question" rows="3" placeholder="파이썬에 대해 무엇이든 물어보세요!"></textarea>
+            <button type="submit" class="tutor-button">질문하기</button>
+        </form>
+
+        {% if tutor_question and tutor_answer %}
+        <div class="tutor-response" id="tutor-response-box">
+            <div class="tutor-q"><strong>나의 질문:</strong> {{ tutor_question }}</div>
+            <div class="tutor-a"><strong>조교 쌤 답변:</strong><br>{{ tutor_answer | replace('\n', '<br>') | safe }}</div>
+        </div>
+        {% endif %}
+    </div>
 </aside>
 
 <main class="problem-area">
@@ -101,6 +117,12 @@
         const resultBox = document.querySelector('.result-box');
         if (resultBox) {
             resultBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // templates/problem_view.html 의 <script> 태그 안
+        const tutorResponseBox = document.getElementById('tutor-response-box');
+        if (tutorResponseBox) {
+            tutorResponseBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     });
 </script>

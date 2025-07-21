@@ -13,7 +13,7 @@ header.top-nav { display: flex; align-items: center; justify-content: flex-start
 .sub-header-inner .logout-button { background: none; border: none; color: #6c757d; cursor: pointer; padding: 0; margin-left: 15px; font-size: 0.85rem; font-family: inherit; }
 .sub-header-inner .logout-button:hover { color: var(--primary-color); }
 .logo-link { display: flex; align-items: center; text-decoration: none; margin-right: 30px; }
-.logo { width: 100px; height: 45px; margin-right: 15px; flex-shrink: 0; }
+.logo { width: 100px; height: 45px; margin-right: 15px; flex-shrink: 0; object-fit: contain;  }
 header.top-nav h1 { margin: 0; color: var(--dark-gray); font-size: 1.2rem; white-space: nowrap; }
 .top-nav nav { flex-grow: 1; }
 .top-nav nav ul { margin: 0; padding: 0; list-style: none; display: flex; justify-content: flex-start; }
@@ -54,16 +54,113 @@ button:hover { background-color: #0056b3; }
 .feedback-correct { background-color: #eafaf1; border-color: var(--success-color); color: #196a3e; }
 .feedback-incorrect { background-color: #f8d7da; border-color: #dc3545; color: #721c24; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.auth-main { display: flex; justify-content: center; align-items: center; padding: 40px 20px; flex-grow: 1; }
-.auth-card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; box-sizing: border-box; }
-.auth-card h2 { text-align: center; margin-top: 0; margin-bottom: 30px; font-size: 1.8rem; color: var(--dark-gray); }
-.auth-card .form-group { margin-bottom: 20px; }
-.auth-card label { display: block; margin-bottom: 8px; font-weight: 500; color: #495057; }
-.auth-card input { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid var(--medium-gray); box-sizing: border-box; font-size: 1rem; transition: border-color 0.2s, box-shadow 0.2s; }
-.auth-card input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2); }
-.auth-card button { width: 100%; margin-top: 10px; }
-.auth-card .switch-form-text { text-align: center; margin-top: 25px; font-size: 0.9rem; }
-.auth-card .error-message { color: #dc3545; background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; border-radius: 6px; margin-bottom: 20px; text-align: center; }
+
+/* --- 로그인 / 회원가입 페이지 --- */
+.auth-main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2.5rem 1.25rem;
+    flex-grow: 1;
+    background: #f0f2f5;
+}
+
+.auth-card {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 420px;
+    box-sizing: border-box;
+    border-top: 5px solid var(--primary-color);
+}
+
+.auth-card h2 {
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 2.5rem;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--dark-gray);
+}
+
+.auth-card .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.auth-card label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.auth-card .input-wrapper {
+    position: relative;
+}
+
+.auth-card .input-wrapper .icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #adb5bd;
+    font-size: 1.1rem;
+}
+
+.auth-card input {
+    width: 100%;
+    padding: 0.8rem 0.8rem 0.8rem 3rem;
+    border-radius: 8px;
+    border: 1px solid var(--medium-gray);
+    box-sizing: border-box;
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.auth-card input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.15);
+}
+
+.auth-card button {
+    width: 100%;
+    margin-top: 1rem;
+    padding: 0.875rem 1.25rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: white;
+    background: var(--primary-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease-out;
+}
+
+.auth-card button:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+}
+
+.auth-card .switch-form-text {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+}
+
+.auth-card .error-message {
+    color: #721c24;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    padding: 0.75rem;
+    border-radius: 6px;
+    margin-bottom: 1.25rem;
+    text-align: center;
+}
+
 .mypage-main { padding: 20px; }
 .mypage-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 2px solid var(--primary-color); flex-wrap: wrap; gap: 15px;}
 .mypage-header h2 { border: none; margin: 0; padding: 0; }
@@ -87,7 +184,7 @@ footer { text-align: center; padding: 20px; font-size: 0.9em; color: #6c757d; ba
 @media (min-width: 1024px) {
     .container { flex-direction: row; align-items: stretch; }
     header.top-nav { padding: 10px 40px; top: 35px; }
-    .logo { width: 50px; height: 50px; }
+    .logo { width: 100px; height: 50px; }
     header.top-nav h1 { font-size: 1.5rem; }
     .theory-sidebar { width: 420px; border-right: 1px solid var(--medium-gray); border-bottom: none; overflow-y: auto; position: sticky; top: 101px; height: calc(100vh - 101px); }
     .theory-toggle { display: none; }
@@ -95,3 +192,14 @@ footer { text-align: center; padding: 20px; font-size: 0.9em; color: #6c757d; ba
     main { padding: 30px 40px; }
     main h2 { font-size: 2.2rem; }
 }
+
+.sidebar-divider { border: none; border-top: 1px solid var(--medium-gray); margin: 1.5rem 0; }
+.tutor-chatbot { background-color: var(--card-bg); border-radius: 8px; padding: 1rem; }
+.tutor-chatbot h4 { margin-top: 0; margin-bottom: 1rem; font-size: 1.1rem; text-align: center; }
+.tutor-chatbot textarea { width: 100%; box-sizing: border-box; border-radius: 6px; border: 1px solid var(--medium-gray); padding: 0.75rem; font-family: inherit; margin-bottom: 0.5rem; resize: vertical; }
+.tutor-button { width: 100%; padding: 0.625rem; font-size: 0.9rem; font-weight: 600; border-radius: 6px; }
+.tutor-response { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--medium-gray); }
+.tutor-q, .tutor-a { padding: 0.75rem 1rem; border-radius: 12px; margin: 0.5rem 0; line-height: 1.5; }
+.tutor-q { background-color: #e9ecef; color: var(--dark-gray); text-align: right; }
+.tutor-a { background-color: var(--primary-color); color: white; }
+.tutor-q strong, .tutor-a strong { display: block; font-weight: 600; margin-bottom: 0.25rem; font-size: 0.8rem; }

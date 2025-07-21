@@ -19,10 +19,10 @@ from content import LESSONS_DATA
 
 #등급시스템 도입
 RANKS = {
-    0: {"name": "준장", "image": "rank_sprout.png"},
-    1: {"name": "소장", "image": "rank_leaf.png"},
-    2: {"name": "중장", "image": "rank_tree.png"},
-    3: {"name": "대장", "image": "rank_forest.png"}
+    0: {"name": "준장", "image": "one_star.svg"},
+    1: {"name": "소장", "image": "two_star.svg"},
+    2: {"name": "중장", "image": "three_star.svg"},
+    3: {"name": "대장", "image": "four_star.svg"}
 }
 
 # --- API 키 설정 ---
@@ -153,7 +153,7 @@ async def read_root(user: models.User = Depends(get_current_user_optional)):
 
 
 @app.get("/{chapter_slug}/{problem_id}", response_class=HTMLResponse)
-async def read_problem(request: Request, chapter_slug: str, problem_id: int, db: AsyncSession = Depends(database.get_db), user_code: str = None, feedback: str = None, hint: str = None, is_correct: str = "false", user: models.User = Depends(get_current_user_optional)):
+async def read_problem(request: Request, chapter_slug: str, problem_id: int, db: AsyncSession = Depends(database.get_db), user_code: str = None, feedback: str = None, hint: str = None, is_correct: str = "false", user: models.User = Depends(get_current_user_optional), tutor_question:str = None, tutor_answer: str=None):
     if not user:
         return RedirectResponse(url="/login")
 
@@ -195,7 +195,9 @@ async def read_problem(request: Request, chapter_slug: str, problem_id: int, db:
         "hint": hint,
         "is_correct": is_correct == "true",
         "completed_problems": list(completed_problems_ids),
-        "rank_info": rank_info
+        "rank_info": rank_info,
+        "tutor_question": tutor_question,
+        "tutor_answer": tutor_answer
     })
 # main.py
 
@@ -276,3 +278,28 @@ async def my_page(request: Request, db: AsyncSession = Depends(database.get_db),
         "all_chapters": all_chapters, "completed_problems_ids": completed_problems_ids,
         "rank_info": rank_info
     })
+
+
+# main.py 파일 맨 아래에 추가
+@app.post("/ask-tutor/{chapter_slug}/{problem_id}")
+async def ask_tutor(chapter_slug: str, problem_id: int, question: str = Form(...)):
+    prompt = f"""
+        You are a kind and helpful Python teaching assistant named '양햄이'.
+        A student has asked the following question about Python.
+        Your answer must be concise, in Korean, and only about Python-related topics.
+        If the question is not about Python, politely decline to answer.
+
+        # Student's Question:
+        {question}
+    """
+    answer = await call_gemini(prompt)
+    
+    # ✨ 디버깅을 위해 print문 추가
+    print("--- AI Tutor Response ---")
+    print(f"Question: {question}")
+    print(f"Answer: {answer}")
+    print("-------------------------")
+
+    query_params = { "tutor_question": question, "tutor_answer": answer }
+    redirect_url = f"/{chapter_slug}/{problem_id}?{urlencode(query_params)}"
+    return RedirectResponse(url=redirect_url, status_code=303)
