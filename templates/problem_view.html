@@ -83,7 +83,7 @@
         });
         
         const completedProblems = new Set({{ completed_problems | tojson }});
-        const currentProblemId = {{ current_problem.id }};
+        const currentProblemId = { { current_problem.id } };
 
         function updateProgressBar() {
             document.querySelectorAll('.progress-step').forEach(stepEl => {
