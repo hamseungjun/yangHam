@@ -77,37 +77,41 @@ const ProblemPage = () => {
     useEffect(() => { fetchData(); }, [fetchData]);
 
     // 정답 확인 버튼 클릭 시 실행되는 함수
-    const handleCheckAnswer = async () => {
-        // Python의 경우에만 브라우저에서 직접 실행
-        if (language === 'python') {
-            if (!isPyodideReady) return;
-            setExecutionOutput("실행 중...");
-            try {
-                let stdout = "";
-                // Pyodide의 표준 출력을 가로채서 stdout 변수에 저장
-                pyodide.current.setStdout({ batched: (str) => stdout += str + "\n" });
-                await pyodide.current.runPythonAsync(userCode);
-                setExecutionOutput(stdout.trim() || "(출력 없음)");
-            } catch (err) { 
-                setExecutionOutput(`에러 발생:\n${err}`);
-            }
-        } else {
-            // Python 외 다른 언어는 브라우저 실행을 건너뜁니다.
-            setExecutionOutput("(백엔드에서 채점 중...)");
-        }
+    // ProblemPage.jsx
 
-        // AI에게 채점 요청
+const handleCheckAnswer = async () => {
+    if (language === 'python') {
+        if (!isPyodideReady) return;
+        setExecutionOutput("실행 중...");
         try {
-            const formData = new FormData();
-            formData.append('user_code', userCode);
-            const res = await api.post(`/check-answer/${language}/${chapterSlug}/${problemId}`, formData);
-            setFeedback(res.data);
-            // 정답일 경우, 새로운 진행 상황을 다시 불러옴
-            if (res.data.is_correct) {
-                fetchData();
-            }
-        } catch (error) { console.error("API 요청 실패", error); }
-    };
+            let stdout = "";
+            pyodide.current.setStdout({ batched: (str) => stdout += str + "\n" });
+            await pyodide.current.runPythonAsync(userCode);
+            setExecutionOutput(stdout.trim() || "(출력 없음)");
+        } catch (err) { 
+            setExecutionOutput(`에러 발생:\n${err}`);
+        }
+    } else {
+        setExecutionOutput("(백엔드에서 채점 중...)");
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('user_code', userCode);
+        const res = await api.post(`/check-answer/${language}/${chapterSlug}/${problemId}`, formData);
+        
+        setFeedback(res.data); // 1. AI 피드백 상태를 먼저 설정합니다.
+
+        // 2. 정답일 경우, fetchData() 대신 로컬 상태를 직접 업데이트합니다.
+        if (res.data.is_correct) {
+            setData(prevData => ({
+                ...prevData,
+                // 기존에 완료한 문제 목록에 현재 문제 ID를 추가합니다.
+                completed_problem_ids: [...prevData.completed_problem_ids, prevData.problem.id]
+            }));
+        }
+    } catch (error) { console.error("API 요청 실패", error); }
+};
 
     if (isLoading) return <div className="loading-message">로딩 중...</div>;
     if (error) return <div className="loading-message">{error}</div>;

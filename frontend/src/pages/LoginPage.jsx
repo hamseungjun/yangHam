@@ -10,19 +10,22 @@ const LoginPage = () => {
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const formData = new FormData();
-            formData.append('username', username);
-            formData.append('password', password);
-            
-            await api.post('/login', formData);
-            navigate('/'); // 로그인 성공 시 홈으로 이동
-        } catch (err) {
-            setError('사용자 이름 또는 비밀번호가 올바르지 않습니다.');
-            console.error(err);
-        }
-    };
+    e.preventDefault();
+    try {
+        const formData = new FormData();
+        formData.append('username', username);
+        formData.append('password', password);
+        
+        await api.post('/login', formData);
+        
+        // navigate('/') 대신 아래 코드로 변경합니다.
+        window.location.href = '/'; // 페이지를 완전히 새로고침하며 홈으로 이동
+        
+    } catch (err) {
+        setError('사용자 이름 또는 비밀번호가 올바르지 않습니다.');
+        console.error(err);
+    }
+};
 
     return (
         <main className="auth-main">
