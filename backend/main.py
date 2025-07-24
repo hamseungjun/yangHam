@@ -94,7 +94,12 @@ RANKS = {
 }
 
 # --- CORS 미들웨어 설정 ---
-origins = ["http://localhost:5173", "http://localhost:5174", "https://yangham-frontend.onrender.com"]
+origins = [
+    "https://yangham-frontend.onrender.com"
+    # ,"http://localhost:5173", 
+    # ,"http://localhost:5174",
+            ]
+
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 # --- Helper Functions ---
@@ -131,7 +136,14 @@ async def login_api(response: Response, username: str = Form(...), password: str
     if not user or not auth.verify_password(password, user.hashed_password):
         raise HTTPException(status_code=401, detail="사용자 이름 또는 비밀번호가 올바르지 않습니다.")
     access_token = auth.create_access_token(data={"sub": user.username})
-    response.set_cookie(key="access_token", value=access_token, httponly=True, samesite="lax")
+    response.set_cookie(
+        key="access_token", 
+        value=access_token, 
+        httponly=True,       # JavaScript에서 쿠키 접근 불가
+        samesite='none',     # 교차 출처(cross-origin) 요청에서도 쿠키 전송 허용
+        secure=True          # HTTPS 연결에서만 쿠키 전송
+    )
+
     return {"message": "Login successful"}
 
 @app.post("/api/logout")
