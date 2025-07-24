@@ -1,13 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import './LanguageSelectionPage.css';
-
-const LANGUAGES = [
-    { slug: 'python', name: 'Python', color: '#3776AB' },
-    { slug: 'javascript', name: 'JavaScript', color: '#F7DF1E' },
-    { slug: 'c', name: 'C', color: '#5C6BC0' },
-    { slug: 'java', name: 'Java', color: '#E52D27' },
-];
+import { LANGUAGES } from '../config'; // 기존 배열 대신 config 파일에서 가져옵니다.
 
 const LanguageSelectionPage = () => {
     return (
@@ -19,7 +13,13 @@ const LanguageSelectionPage = () => {
             </div>
             <div className="language-grid">
                 {LANGUAGES.map(lang => (
-                    <Link to={`/${lang.slug}`} key={lang.slug} className="language-card" style={{'--lang-color': lang.color}}>
+                    <Link 
+                        to={`/${lang.slug}`} 
+                        key={lang.slug} 
+                        className="language-card" 
+                        // CSS 변수를 이용해 각 카드에 고유 색상을 적용합니다.
+                        style={{'--lang-color': lang.color}}
+                    >
                         <span>{lang.name}</span>
                     </Link>
                 ))}
