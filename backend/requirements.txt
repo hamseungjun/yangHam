@@ -9,4 +9,3 @@ passlib[bcrypt]
 python-jose[cryptography]
 python-multipart
 asyncpg
-psycopg2-binary
