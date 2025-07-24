@@ -1,14 +1,12 @@
+# auth.py
 from datetime import datetime, timedelta, timezone
 from fastapi import Depends, HTTPException, status, Request
-from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from decouple import config
-
-import models
-import database
+import models, database
 
 SECRET_KEY = config("SECRET_KEY")
 ALGORITHM = "HS256"

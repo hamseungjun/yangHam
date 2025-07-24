@@ -1,0 +1,48 @@
+.dashboard-main { padding: 1.5rem; }
+.loading-message { padding: 2rem; font-size: 1.2rem; text-align: center; }
+.dashboard-header { margin-bottom: 1.5rem; }
+.dashboard-header h2 { border: none; margin: 0; font-size: 1.6rem; }
+.dashboard-header p { font-size: 1rem; color: #6c757d; }
+.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
+.dashboard-card { background: var(--card-bg); border-radius: 12px; padding: 1rem; box-shadow: 0 4px 10px rgba(0,0,0,0.08); transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; position: relative; overflow: hidden; }
+.dashboard-card:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.1); }
+.summary-card-group { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background-color: var(--medium-gray); padding: 1px; margin-bottom: 1rem; }
+.welcome-card, .continue-card { background-color: white; padding: 1rem; text-align: center; }
+.welcome-card { border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
+.continue-card { border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
+.welcome-card h3, .continue-card h3 { margin-top: 0.5rem; margin-bottom: 0.5rem; font-size: 1.1rem; }
+.rank-icon-large { width: 40px; height: 40px; margin: 0.5rem 0; }
+.welcome-card .rank-name { font-size: 1rem; font-weight: 500; color: var(--primary-color); }
+.continue-card p { color: #6c757d; font-size: 0.85rem; margin-bottom: 0.5rem; }
+.continue-btn { display: inline-block; background-color: var(--success-color); color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 500; margin-top: 0.5rem; transition: all 0.2s ease; font-size: 0.9rem; }
+.continue-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(40, 167, 69, 0.4); }
+.chapter-summary-card { text-align: left; padding: 1rem; display: flex; flex-direction: column; }
+.chapter-summary-card h3 { margin-top: 0; margin-bottom: 0.5rem; font-size: 1.1rem; }
+.summary-progress-bar { width: 100%; height: 8px; background-color: var(--medium-gray); border-radius: 4px; overflow: hidden; margin-bottom: 0.3rem; }
+.summary-progress-bar-fill { height: 100%; background-color: var(--primary-color); border-radius: 4px; transition: width 0.5s ease-in-out; }
+.chapter-summary-card p { margin-bottom: 0; color: #6c757d; font-size: 0.8rem; }
+
+.shortcut-button {
+display: inline-block;
+background-color: var(--primary-color);
+color: white;
+text-decoration: none;
+padding: 0.5rem 1rem;
+border-radius: 6px;
+font-weight: 500;
+transition: background-color 0.2s ease;
+font-size: 0.8rem;
+margin-top: 0.75rem; 
+}
+
+.shortcut-button:hover {
+background-color: var(--primary-hover);
+transform: translateY(-1px);
+box-shadow: 0 3px 6px rgba(0, 123, 255, 0.3);
+}
+
+.chapter-summary-card .chapter-shortcut {
+margin-top: 1rem;
+text-align: center;
+display: block; 
+}

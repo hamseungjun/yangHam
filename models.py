@@ -22,7 +22,8 @@ class UserProgress(Base):
 class Chapter(Base):
     __tablename__ = "chapters"
     id = Column(Integer, primary_key=True)
-    slug = Column(String, unique=True, index=True)
+    language = Column(String, index=True) # ✨ 언어 필드 추가
+    slug = Column(String, index=True)
     title = Column(String)
     problems = relationship("Problem", back_populates="chapter")
 
