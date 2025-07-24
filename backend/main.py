@@ -148,9 +148,14 @@ async def login_api(response: Response, username: str = Form(...), password: str
 
 @app.post("/api/logout")
 async def logout_api(response: Response):
-    response.delete_cookie(key="access_token")
+    # 쿠키를 생성할 때와 동일한 samesite, secure 옵션을 추가해줍니다.
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        samesite='none',
+        secure=True
+    )
     return {"message": "Logout successful"}
-
 
 @app.get("/api/chapters/{language}", response_model=List[ChapterSchema])
 async def get_chapters_by_language(language: str, db: AsyncSession = Depends(database.get_db)):
