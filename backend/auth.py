@@ -1,4 +1,6 @@
 # auth.py
+import os
+from dotenv import load_dotenv
 from datetime import datetime, timedelta, timezone
 from fastapi import Depends, HTTPException, status, Request
 from jose import JWTError, jwt
@@ -6,12 +8,10 @@ from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import models, database
-import os
-from dotenv import load_dotenv
 
+load_dotenv() # .env 파일 로드
 
-load_dotenv()
-SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY = os.getenv("SECRET_KEY") # config() -> os.getenv()로 변경
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
