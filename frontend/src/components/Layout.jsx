@@ -66,7 +66,7 @@ const Layout = () => {
           {user ? (
             <>
               <span>환영합니다, <strong>{user.username}</strong>님!</span>
-              <Link to={`/${language}`}>학습 홈</Link>
+              <Link to={`/`}>학습 홈</Link>
               <button onClick={handleLogout} className="logout-button">로그아웃</button>
             </>
           ) : (

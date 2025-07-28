@@ -14,3 +14,43 @@
     transition: all 0.2s ease-in-out;
 }
 .language-card:hover { transform: translateY(-10px); box-shadow: 0 10px 30px rgba(0,0,0,0.12); }
+
+
+/* LanguageSelectionPage.css 파일 하단에 추가 */
+
+.language-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.language-name {
+    margin-bottom: 1.5rem; /* 이름과 진행률 바 사이 간격 */
+}
+
+.progress-info {
+    width: 100%;
+    text-align: center;
+}
+
+.progress-bar-background {
+    width: 90%;
+    height: 10px;
+    background-color: var(--medium-gray);
+    border-radius: 5px;
+    margin: 0 auto 0.5rem; /* 위쪽 여백 0, 좌우 자동, 아래쪽 여백 0.5rem */
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.5s ease-in-out;
+}
+
+.progress-text {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #6c757d;
+}

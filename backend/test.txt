@@ -1,0 +1,53 @@
+@app.post("/api/check-answer/{language}/{chapter_slug}/{problem_id}")
+async def check_answer_api(language: str, chapter_slug: str, problem_id: int, user_code: str = Form(...), db: AsyncSession = Depends(database.get_db), user: models.User = Depends(auth.get_current_user)):
+    problem_query = select(models.Problem).join(models.Chapter).where(models.Chapter.language == language, models.Chapter.slug == chapter_slug, models.Problem.problem_number_in_chapter == problem_id)
+    current_problem = (await db.execute(problem_query)).scalars().first()
+    if not current_problem: raise HTTPException(status_code=404, detail="Problem not found")
+
+    # --- 외부 API 호출 (시간이 오래 걸리는 작업) ---
+    prompt = f"""You are a smart and forgiving {language} coding tutor. Your main goal is to check if the student understands the core logic, not to be overly strict about syntax.
+# Problem: {current_problem.question}
+# Student's Code:\n{user_code}
+Respond in a JSON format with two keys: "is_correct" (boolean) and "feedback" (string in Korean)."""
+    
+    response_text = await call_gemini(prompt)
+    # ---------------------------------------------
+    
+    is_correct, feedback = False, "피드백 파싱 실패"
+    try:
+        cleaned_json = response_text.strip().replace("```json", "").replace("```", "")
+        result = json.loads(cleaned_json)
+        is_correct = result.get("is_correct", False)
+        feedback = result.get("feedback", feedback)
+    except Exception: feedback = response_text
+    
+    if is_correct:
+        progress_query = select(models.UserProgress).where(models.UserProgress.user_id == user.id, models.UserProgress.problem_id == current_problem.id)
+        if not (await db.execute(progress_query)).scalars().first():
+            db.add(models.UserProgress(user_id=user.id, problem_id=current_problem.id))
+            await db.commit()
+            
+            # --- 해결책: DB 작업을 하기 전에 user 객체를 갱신합니다. ---
+            await db.refresh(user)
+            # ----------------------------------------------------
+            
+            await check_and_award_badges(user, db) # user.id 대신 user 객체 전체를 전달
+            
+    return {"is_correct": is_correct, "feedback": feedback}
+
+# check_and_award_badges 함수도 user 객체를 받도록 수정
+async def check_and_award_badges(user: models.User, db: AsyncSession):
+    solved_problems_count = (await db.execute(select(func.count(models.UserProgress.id)).where(models.UserProgress.user_id == user.id))).scalar()
+    
+    earned_badge_ids_result = await db.execute(select(models.UserBadge.badge_id).where(models.UserBadge.user_id == user.id))
+    earned_badge_ids = {b[0] for b in earned_badge_ids_result}
+    
+    all_badges = (await db.execute(select(models.Badge))).scalars().all()
+
+    for badge in all_badges:
+        if badge.id not in earned_badge_ids:
+            if badge.criteria_type == "problems" and solved_problems_count >= badge.criteria_value:
+                new_user_badge = models.UserBadge(user_id=user.id, badge_id=badge.id)
+                db.add(new_user_badge)
+
+    await db.commit()

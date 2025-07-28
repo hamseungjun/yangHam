@@ -2,14 +2,16 @@ import os
 import json
 from contextlib import asynccontextmanager
 from typing import List
+import requests
+import time
 from fastapi import FastAPI, Request, Form, Depends, HTTPException, status, Response
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload
+from sqlalchemy import select, func
+from sqlalchemy.orm import selectinload, joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
-
+import base64
 # 로컬 파일 임포트
 import auth
 import models
@@ -37,23 +39,79 @@ class UserSchema(BaseModel):
     username: str
     class Config: from_attributes = True
 
+# 뱃지 시스템을 위한 새로운 스키마
+class BadgeSchema(BaseModel):
+    id: int
+    name: str
+    description: str
+    image: str
+    class Config: from_attributes = True
 
-# --- API 키 설정 ---
-api_key = os.getenv("GEMINI_API_KEY")
-if api_key:
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+
+if GEMINI_API_KEY:
     try:
         import google.generativeai as genai
-        genai.configure(api_key=api_key)
+        genai.configure(api_key=GEMINI_API_KEY)
     except Exception as e:
-        print(f"API 키 설정 오류: {e}")
-        api_key = None
+        print(f"Gemini API 키 설정 오류: {e}")
+        GEMINI_API_KEY = None
 
 
+
+# main.py의 check_and_award_badges 함수 전체를 교체
+
+async def check_and_award_badges(user: models.User, db: AsyncSession):
+    # 사용자가 푼 모든 문제 ID 집합
+    solved_problems_result = await db.execute(select(models.UserProgress.problem_id).where(models.UserProgress.user_id == user.id))
+    solved_problem_ids = {p[0] for p in solved_problems_result}
+    
+    # 사용자가 이미 획득한 배지 ID 집합
+    earned_badge_ids_result = await db.execute(select(models.UserBadge.badge_id).where(models.UserBadge.user_id == user.id))
+    earned_badge_ids = {b[0] for b in earned_badge_ids_result}
+    
+    # 획득 가능한 모든 배지 정보
+    all_badges = (await db.execute(select(models.Badge))).scalars().all()
+
+    newly_awarded = False
+
+    for badge in all_badges:
+        if badge.id in earned_badge_ids:
+            continue # 이미 획득한 배지는 건너뜀
+
+        # --- 조건 1: 푼 문제 수 기반 배지 ---
+        if badge.criteria_type == "problems_solved":
+            if len(solved_problem_ids) >= int(badge.criteria_value):
+                db.add(models.UserBadge(user_id=user.id, badge_id=badge.id))
+                newly_awarded = True
+
+        # --- 조건 2: 언어 마스터 배지 ---
+        elif badge.criteria_type == "language_master":
+            language_to_check = badge.criteria_value
+            
+            # 해당 언어의 모든 문제 ID 가져오기
+            lang_problems_result = await db.execute(
+                select(models.Problem.id).join(models.Chapter).where(models.Chapter.language == language_to_check)
+            )
+            all_lang_problem_ids = {p[0] for p in lang_problems_result}
+            
+            # 만약 해당 언어의 모든 문제가 푼 문제 목록에 포함된다면
+            if all_lang_problem_ids and all_lang_problem_ids.issubset(solved_problem_ids):
+                db.add(models.UserBadge(user_id=user.id, badge_id=badge.id))
+                newly_awarded = True
+
+    if newly_awarded:
+        await db.commit()
+
+
+# 데이터베이스 및 테이블 생성, 초기 데이터 주입
 async def create_db_and_tables():
     async with database.engine.begin() as conn:
         await conn.run_sync(database.Base.metadata.create_all)
     
     async with database.SessionLocal() as session:
+        # 챕터 및 문제 데이터 주입
         result = await session.execute(select(models.Chapter))
         if result.scalars().first() is None:
             print("DB에 다국어 커리큘럼 데이터 주입...")
@@ -67,7 +125,6 @@ async def create_db_and_tables():
                     session.add(new_chapter)
                     await session.flush()
                     for p_data in chapter_data["problems"]:
-                        # ✨ 여기서 키 이름을 올바르게 매핑합니다.
                         problem = models.Problem(
                             chapter_id=new_chapter.id,
                             problem_number_in_chapter=p_data["problem_id"],
@@ -77,7 +134,24 @@ async def create_db_and_tables():
                         )
                         session.add(problem)
             await session.commit()
-
+            
+        # 배지 데이터 주입
+        badge_count = (await session.execute(select(func.count(models.Badge.id)))).scalar()
+        if badge_count == 0:
+            print("DB에 기본 배지 데이터 주입...")
+            badges_to_add = [
+                # --- 기존 문제 수 기반 배지 ---
+                models.Badge(name="첫걸음", description="첫 번째 문제를 해결했습니다.", image="badge_first_step.png", criteria_type="problems_solved", criteria_value="1"),
+                models.Badge(name="열 문제 정복자", description="총 10개의 문제를 해결했습니다.", image="badge_ten_problems.png", criteria_type="problems_solved", criteria_value="10"),
+                
+                # --- 새로 추가할 언어 마스터 배지 ---
+                models.Badge(name="파이썬 마스터", description="파이썬의 모든 챕터를 완료했습니다.", image="badge_python_master.png", criteria_type="language_master", criteria_value="python"),
+                models.Badge(name="자바스크립트 마스터", description="자바스크립트의 모든 챕터를 완료했습니다.", image="badge_js_master.png", criteria_type="language_master", criteria_value="javascript"),
+                models.Badge(name="C 마스터", description="C언어의 모든 챕터를 완료했습니다.", image="badge_c_master.png", criteria_type="language_master", criteria_value="c"),
+                models.Badge(name="자바 마스터", description="자바의 모든 챕터를 완료했습니다.", image="badge_java_master.png", criteria_type="language_master", criteria_value="java"),
+            ]
+            session.add_all(badges_to_add)
+            await session.commit()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -95,25 +169,24 @@ RANKS = {
 
 # --- CORS 미들웨어 설정 ---
 origins = [
-    "https://yangham-frontend.onrender.com"
-    # ,"http://localhost:5173", 
-    # ,"http://localhost:5174",
-            ]
-
+    "http://localhost:5173", 
+    "http://localhost:5174",
+    # 여기에 배포된 프론트엔드 주소 추가
+]
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
-# --- Helper Functions ---
+# main.py 상단에 추가
+import asyncio
 async def call_gemini(prompt):
-    if not api_key: return "API 키가 설정되지 않았습니다."
+    if not GEMINI_API_KEY:
+        return "API 키가 설정되지 않았습니다."
     try:
         model = genai.GenerativeModel('gemini-1.5-flash')
         response = await model.generate_content_async(prompt)
         return response.text
-    except Exception as e: return f"AI 응답 오류: {e}"
-
-async def get_current_user_optional(request: Request, db: AsyncSession = Depends(database.get_db)):
-    try: return await auth.get_current_user(request, db)
-    except HTTPException: return None
+    except Exception as e:
+        return f"AI 응답 오류: {e}"
+    
 
 # --- API Routes ---
 @app.get("/api/users/me", response_model=UserSchema)
@@ -135,37 +208,23 @@ async def login_api(response: Response, username: str = Form(...), password: str
     user = (await db.execute(select(models.User).where(models.User.username == username))).scalars().first()
     if not user or not auth.verify_password(password, user.hashed_password):
         raise HTTPException(status_code=401, detail="사용자 이름 또는 비밀번호가 올바르지 않습니다.")
+    
     access_token = auth.create_access_token(data={"sub": user.username})
     response.set_cookie(
-        key="access_token", 
-        value=access_token, 
-        httponly=True,       # JavaScript에서 쿠키 접근 불가
-        samesite='none',     # 교차 출처(cross-origin) 요청에서도 쿠키 전송 허용
-        secure=True          # HTTPS 연결에서만 쿠키 전송
+        key="access_token", value=access_token, httponly=True,
+        samesite='none', secure=True
     )
-
     return {"message": "Login successful"}
 
 @app.post("/api/logout")
 async def logout_api(response: Response):
-    # 쿠키를 생성할 때와 동일한 samesite, secure 옵션을 추가해줍니다.
-    response.delete_cookie(
-        key="access_token",
-        httponly=True,
-        samesite='none',
-        secure=True
-    )
+    response.delete_cookie(key="access_token")
     return {"message": "Logout successful"}
 
 @app.get("/api/chapters/{language}", response_model=List[ChapterSchema])
 async def get_chapters_by_language(language: str, db: AsyncSession = Depends(database.get_db)):
     chapters_query = select(models.Chapter).where(models.Chapter.language == language).options(selectinload(models.Chapter.problems)).order_by(models.Chapter.id)
     chapters_result = await db.execute(chapters_query)
-    return chapters_result.scalars().all()
-
-@app.get("/api/chapters", response_model=List[ChapterSchema])
-async def get_all_chapters(db: AsyncSession = Depends(database.get_db)):
-    chapters_result = await db.execute(select(models.Chapter).options(selectinload(models.Chapter.problems)).order_by(models.Chapter.id))
     return chapters_result.scalars().all()
 
 @app.get("/api/chapters/{language}/{chapter_slug}/problems/{problem_id}")
@@ -192,12 +251,15 @@ async def check_answer_api(language: str, chapter_slug: str, problem_id: int, us
     current_problem = (await db.execute(problem_query)).scalars().first()
     if not current_problem: raise HTTPException(status_code=404, detail="Problem not found")
 
+    # --- 외부 API 호출 (시간이 오래 걸리는 작업) ---
     prompt = f"""You are a smart and forgiving {language} coding tutor. Your main goal is to check if the student understands the core logic, not to be overly strict about syntax.
 # Problem: {current_problem.question}
 # Student's Code:\n{user_code}
 Respond in a JSON format with two keys: "is_correct" (boolean) and "feedback" (string in Korean)."""
     
     response_text = await call_gemini(prompt)
+    # ---------------------------------------------
+    
     is_correct, feedback = False, "피드백 파싱 실패"
     try:
         cleaned_json = response_text.strip().replace("```json", "").replace("```", "")
@@ -212,36 +274,39 @@ Respond in a JSON format with two keys: "is_correct" (boolean) and "feedback" (s
             db.add(models.UserProgress(user_id=user.id, problem_id=current_problem.id))
             await db.commit()
             
+            # --- 해결책: DB 작업을 하기 전에 user 객체를 갱신합니다. ---
+            await db.refresh(user)
+            # ----------------------------------------------------
+            
+            await check_and_award_badges(user, db) # user.id 대신 user 객체 전체를 전달
+            
     return {"is_correct": is_correct, "feedback": feedback}
 
 
 @app.get("/api/dashboard/{language}")
 async def get_dashboard_data(language: str, db: AsyncSession = Depends(database.get_db), user: models.User = Depends(auth.get_current_user)):
-    """대시보드에 필요한 모든 데이터를 조회하여 반환합니다."""
-    # 해당 언어의 챕터만 조회하도록 수정
     chapters_query = select(models.Chapter).where(models.Chapter.language == language).options(selectinload(models.Chapter.problems)).order_by(models.Chapter.id)
     chapters_result = await db.execute(chapters_query)
     all_chapters = chapters_result.scalars().all()
     
-    # 사용자의 전체 진행 상황은 그대로 유지
     progress_result = await db.execute(select(models.UserProgress.problem_id).where(models.UserProgress.user_id == user.id))
     completed_problems_ids = {p[0] for p in progress_result}
+    
+    user_badges_query = select(models.UserBadge).options(joinedload(models.UserBadge.badge)).where(models.UserBadge.user_id == user.id)
+    user_badges_result = await db.execute(user_badges_query)
+    earned_badges = [ub.badge for ub in user_badges_result.scalars().all()]
 
-    # 등급 계산
     completed_chapters_count = sum(1 for ch in all_chapters if ch.problems and {p.id for p in ch.problems}.issubset(completed_problems_ids))
     rank_level = min(completed_chapters_count, 3)
     rank_info = RANKS[rank_level]
     
-    # 다음에 풀 문제 찾기 (Continue Learning)
-    next_problem_url = f"/{language}" # 기본값은 해당 언어의 홈으로
+    next_problem_url = f"/{language}"
     for chapter in all_chapters:
         if not chapter.problems: continue
         is_found = False
-        # 챕터의 문제들을 순서대로 정렬
         sorted_problems = sorted(chapter.problems, key=lambda p: p.problem_number_in_chapter)
         for problem in sorted_problems:
             if problem.id not in completed_problems_ids:
-                # URL에 language를 포함하도록 수정
                 next_problem_url = f"/{language}/{chapter.slug}/{problem.problem_number_in_chapter}"
                 is_found = True
                 break
@@ -249,9 +314,37 @@ async def get_dashboard_data(language: str, db: AsyncSession = Depends(database.
             break
 
     return {
-        "user": user,
+        "user": UserSchema.from_orm(user),
         "rank_info": rank_info,
-        "all_chapters": all_chapters,
+        "all_chapters": [ChapterSchema.from_orm(c) for c in all_chapters],
         "completed_problem_ids": list(completed_problems_ids),
-        "next_problem_url": next_problem_url
+        "next_problem_url": next_problem_url,
+        "earned_badges": [BadgeSchema.from_orm(b) for b in earned_badges]
     }
+
+@app.get("/api/overall-progress")
+async def get_overall_progress(db: AsyncSession = Depends(database.get_db), user: models.User = Depends(auth.get_current_user)):
+    all_chapters_result = await db.execute(
+        select(models.Chapter).options(selectinload(models.Chapter.problems)).order_by(models.Chapter.language, models.Chapter.id)
+    )
+    all_chapters = all_chapters_result.scalars().all()
+
+    progress_result = await db.execute(
+        select(models.UserProgress.problem_id).where(models.UserProgress.user_id == user.id)
+    )
+    completed_problems_ids = {p[0] for p in progress_result}
+
+    progress_by_language = {}
+    for chapter in all_chapters:
+        lang = chapter.language
+        if lang not in progress_by_language:
+            progress_by_language[lang] = {"total": 0, "completed": 0}
+        
+        if chapter.problems:
+            total_in_chapter = len(chapter.problems)
+            completed_in_chapter = len([p for p in chapter.problems if p.id in completed_problems_ids])
+            
+            progress_by_language[lang]["total"] += total_in_chapter
+            progress_by_language[lang]["completed"] += completed_in_chapter
+
+    return progress_by_language

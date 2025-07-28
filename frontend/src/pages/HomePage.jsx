@@ -28,7 +28,8 @@ const HomePage = () => {
     if (loading) return <div className="loading-message">로딩 중...</div>;
     if (!dashboardData) return <div className="loading-message">대시보드 정보를 불러올 수 없습니다.</div>;
 
-    const { user, rank_info, all_chapters, completed_problem_ids, next_problem_url } = dashboardData;
+    // 백엔드에서 받은 데이터에서 earned_badges를 추출합니다.
+    const { user, rank_info, all_chapters, completed_problem_ids, next_problem_url, earned_badges } = dashboardData;
 
     return (
         <main className="dashboard-main">
@@ -37,26 +38,40 @@ const HomePage = () => {
                 <p>오늘도 양햄이와 함께 즐겁게 코딩해봐요!</p>
             </div>
 
-            <div className="dashboard-grid">
-                <div className="dashboard-card summary-card-group">
-                    <div className="welcome-card">
-                        <h3>내 등급</h3>
-                        <img src={`/img/${rank_info.image}`} alt={rank_info.name} className="rank-icon-large" />
-                        <p className="rank-name">{rank_info.name} 등급</p>
-                    </div>
-                    
-                    <div className="continue-card">
-                        <h3>이어서 학습하기</h3>
-                        <p>가장 최근에 학습하던 곳부터 다시 시작하세요.</p>
-                        <Link to={next_problem_url} className="continue-btn">
-                            학습 계속하기 →
-                        </Link>
+            <div className="dashboard-card summary-card-group">
+                <div className="welcome-card">
+                    <h3>내 등급</h3>
+                    <img src={`/img/${rank_info.image}`} alt={rank_info.name} className="rank-icon-large" />
+                    <p className="rank-name">{rank_info.name} 등급</p>
+                </div>
+
+                <div className="continue-card">
+                    <h3>이어서 학습하기</h3>
+                    <p>가장 최근에 학습하던 곳부터 다시 시작하세요.</p>
+                    <Link to={next_problem_url} className="continue-btn">
+                        학습 계속하기 →
+                    </Link>
+                </div>
+            </div>
+
+            {/* --- 획득한 배지 섹션 --- */}
+            {earned_badges && earned_badges.length > 0 && (
+                <div className="dashboard-card badge-card">
+                    <h3>획득한 배지 🏆</h3>
+                    <div className="badge-grid">
+                        {earned_badges.map(badge => (
+                            <div key={badge.id} className="badge-item" title={`${badge.name}: ${badge.description}`}>
+                                <img src={`/img/${badge.image}`} alt={badge.name} />
+                            </div>
+                        ))}
                     </div>
                 </div>
-                
+            )}
+
+            <div className="dashboard-grid">
                 {all_chapters.map(chapter => {
                     if (!chapter.problems.length) return null;
-                    
+
                     const total = chapter.problems.length;
                     const completed = chapter.problems.filter(p => completed_problem_ids.includes(p.id)).length;
                     const percent = total > 0 ? Math.round((completed / total) * 100) : 0;

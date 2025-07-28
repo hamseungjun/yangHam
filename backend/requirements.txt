@@ -1,7 +1,8 @@
 fastapi
 uvicorn
 jinja2
-google-generativeai
+google-cloud-aiplatform
+google-api-python-client
 python-decouple
 sqlalchemy[asyncio]
 aiosqlite
