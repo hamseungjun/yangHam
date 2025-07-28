@@ -10,3 +10,5 @@ passlib[bcrypt]
 python-jose[cryptography]
 python-multipart
 asyncpg
+google-generativeai
+python-dotenv
