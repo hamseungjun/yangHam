@@ -6,6 +6,7 @@ jinja2
 sqlalchemy
 psycopg[binary]
 aiosqlite
+asyncpg 
 
 # Google Gemini AI
 google-generativeai
