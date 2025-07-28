@@ -2,14 +2,20 @@ fastapi
 uvicorn
 jinja2
 
+# 데이터베이스
 sqlalchemy
 psycopg[binary]
 aiosqlite
 
+# Google Gemini AI
 google-generativeai
 
+# 인증
 passlib[bcrypt]
 python-jose[cryptography]
 
+# 환경 변수
+python-decouple
+
+# 기타 유틸리티
 python-multipart
-python-dotenv
