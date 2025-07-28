@@ -2,10 +2,10 @@ fastapi
 uvicorn
 jinja2
 
-# 데이터베이스
+# 데이터베이스 (asyncpg 사용)
 sqlalchemy
+asyncpg
 aiosqlite
-asyncpg 
 
 # Google Gemini AI
 google-generativeai
@@ -14,7 +14,7 @@ google-generativeai
 passlib[bcrypt]
 python-jose[cryptography]
 
-# 환경 변수
+# 환경 변수 (decouple 사용)
 python-decouple
 
 # 기타 유틸리티
