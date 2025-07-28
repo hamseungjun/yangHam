@@ -4,7 +4,7 @@ jinja2
 
 # 데이터베이스 (asyncpg 사용)
 sqlalchemy
-asyncpg
+psycopg[binary]
 aiosqlite
 
 # Google Gemini AI
@@ -19,3 +19,4 @@ python-decouple
 
 # 기타 유틸리티
 python-multipart
+python-dotenv

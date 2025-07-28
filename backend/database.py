@@ -1,15 +1,16 @@
-from decouple import config
+import os
+from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import declarative_base
 
-DATABASE_URL = config("DATABASE_URL")
+load_dotenv()
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Render에서 제공하는 postgresql:// URL을 비동기용 postgresql+asyncpg:// 로 변경
-# 이 코드 블록의 주석이 반드시 해제되어야 합니다!
 if DATABASE_URL and DATABASE_URL.startswith("postgresql://"):
-    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg_async://", 1)
 
-engine = create_async_engine(DATABASE_URL)
+engine = create_async_engine(DATABASE_URL) if DATABASE_URL else None
+
 SessionLocal = async_sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 

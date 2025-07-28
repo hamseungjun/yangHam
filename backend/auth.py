@@ -5,10 +5,14 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from decouple import config
 import models, database
+import os
+from dotenv import load_dotenv
 
-SECRET_KEY = config("SECRET_KEY")
+
+load_dotenv()
+SECRET_KEY = os.getenv("SECRET_KEY")
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
