@@ -215,7 +215,7 @@ async def login_api(response: Response, username: str = Form(...), password: str
     access_token = auth.create_access_token(data={"sub": user.username})
     response.set_cookie(
         key="access_token", value=access_token, httponly=True,
-        samesite='none', secure=True
+        samesite='lax', secure=True
     )
     return {"message": "Login successful"}
 
