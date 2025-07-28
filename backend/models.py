@@ -8,6 +8,7 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     username = Column(String, unique=True, index=True)
     hashed_password = Column(String)
+    last_language_slug = Column(String, nullable=True) 
     progress = relationship("UserProgress", back_populates="user")
 
 class UserProgress(Base):

@@ -34,14 +34,14 @@ const SignupPage = () => {
                     <div className="form-group">
                         <label htmlFor="username">사용자 이름</label>
                         <div className="input-wrapper">
-                            <span className="icon">👤</span>
+                            <span className="icon" placeholder = "사용할 이름을 입력하세요"></span>
                             <input type="text" id="username" value={username} onChange={e => setUsername(e.target.value)} placeholder="사용할 이름을 입력하세요" required />
                         </div>
                     </div>
                     <div className="form-group">
                         <label htmlFor="password">비밀번호</label>
                         <div className="input-wrapper">
-                            <span className="icon">🔒</span>
+                            <span placeholder="사용할 비밀번호를 입력하세요"></span>
                             <input type="password" id="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="사용할 비밀번호를 입력하세요" required />
                         </div>
                     </div>

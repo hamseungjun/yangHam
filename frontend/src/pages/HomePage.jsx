@@ -40,9 +40,9 @@ const HomePage = () => {
 
             <div className="dashboard-card summary-card-group">
                 <div className="welcome-card">
-                    <h3>내 등급</h3>
+                    <h3>내 계급</h3>
                     <img src={`/img/${rank_info.image}`} alt={rank_info.name} className="rank-icon-large" />
-                    <p className="rank-name">{rank_info.name} 등급</p>
+                    <p className="rank-name">{rank_info.name}</p>
                 </div>
 
                 <div className="continue-card">

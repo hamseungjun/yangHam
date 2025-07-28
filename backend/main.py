@@ -140,10 +140,6 @@ async def create_db_and_tables():
         if badge_count == 0:
             print("DB에 기본 배지 데이터 주입...")
             badges_to_add = [
-                # --- 기존 문제 수 기반 배지 ---
-                models.Badge(name="첫걸음", description="첫 번째 문제를 해결했습니다.", image="badge_first_step.png", criteria_type="problems_solved", criteria_value="1"),
-                models.Badge(name="열 문제 정복자", description="총 10개의 문제를 해결했습니다.", image="badge_ten_problems.png", criteria_type="problems_solved", criteria_value="10"),
-                
                 # --- 새로 추가할 언어 마스터 배지 ---
                 models.Badge(name="파이썬 마스터", description="파이썬의 모든 챕터를 완료했습니다.", image="badge_python_master.png", criteria_type="language_master", criteria_value="python"),
                 models.Badge(name="자바스크립트 마스터", description="자바스크립트의 모든 챕터를 완료했습니다.", image="badge_js_master.png", criteria_type="language_master", criteria_value="javascript"),
@@ -161,10 +157,16 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 RANKS = {
-    0: {"name": "새싹", "image": "rank_sprout.png"},
-    1: {"name": "잎새", "image": "rank_leaf.png"},
-    2: {"name": "나무", "image": "rank_tree.png"},
-    3: {"name": "숲", "image": "rank_forest.png"}
+    0: {"name": "소위", "image": "rank_image/1.svg"},
+    1: {"name": "중위", "image": "rank_image/2.svg"},
+    2: {"name": "대위", "image": "rank_image/3.svg"},
+    3: {"name": "소령", "image": "rank_image/4.svg"},
+    4: {"name": "중령", "image": "rank_image/5.svg"},
+    5: {"name": "대령", "image": "rank_image/6.svg"},
+    6: {"name": "준장", "image": "rank_image/7.svg"},
+    7: {"name": "소장", "image": "rank_image/8.svg"},
+    8: {"name": "중장", "image": "rank_image/9.svg"},
+    9: {"name": "대장", "image": "rank_image/10.svg"}
 }
 
 # --- CORS 미들웨어 설정 ---
@@ -272,12 +274,11 @@ Respond in a JSON format with two keys: "is_correct" (boolean) and "feedback" (s
         progress_query = select(models.UserProgress).where(models.UserProgress.user_id == user.id, models.UserProgress.problem_id == current_problem.id)
         if not (await db.execute(progress_query)).scalars().first():
             db.add(models.UserProgress(user_id=user.id, problem_id=current_problem.id))
-            await db.commit()
-            
-            # --- 해결책: DB 작업을 하기 전에 user 객체를 갱신합니다. ---
+            if user.last_language_slug != language:
+                user.last_language_slug = language
+
+            await db.commit()   
             await db.refresh(user)
-            # ----------------------------------------------------
-            
             await check_and_award_badges(user, db) # user.id 대신 user 객체 전체를 전달
             
     return {"is_correct": is_correct, "feedback": feedback}
@@ -296,11 +297,15 @@ async def get_dashboard_data(language: str, db: AsyncSession = Depends(database.
     user_badges_result = await db.execute(user_badges_query)
     earned_badges = [ub.badge for ub in user_badges_result.scalars().all()]
 
-    completed_chapters_count = sum(1 for ch in all_chapters if ch.problems and {p.id for p in ch.problems}.issubset(completed_problems_ids))
-    rank_level = min(completed_chapters_count, 3)
-    rank_info = RANKS[rank_level]
     
+    total_problems_for_ranking = 80 # 전체 문제 수를 80개로 가정
+    problems_per_rank = total_problems_for_ranking / len(RANKS) # 80 / 10 = 8.0
+    
+    solved_count = len(completed_problems_ids)
+    rank_level = min(int(solved_count // problems_per_rank), len(RANKS) - 1)
+    rank_info = RANKS[rank_level]
     next_problem_url = f"/{language}"
+
     for chapter in all_chapters:
         if not chapter.problems: continue
         is_found = False
@@ -321,6 +326,37 @@ async def get_dashboard_data(language: str, db: AsyncSession = Depends(database.
         "next_problem_url": next_problem_url,
         "earned_badges": [BadgeSchema.from_orm(b) for b in earned_badges]
     }
+
+
+@app.get("/api/simple-dashboard", response_model=None)
+async def get_simple_dashboard(db: AsyncSession = Depends(database.get_db), user: models.User = Depends(auth.get_current_user)):
+    progress_result = await db.execute(select(models.UserProgress.problem_id).where(models.UserProgress.user_id == user.id))
+    completed_problems_ids = {p[0] for p in progress_result}
+    
+    total_problems_for_ranking = 80
+    problems_per_rank = total_problems_for_ranking / len(RANKS)
+    solved_count = len(completed_problems_ids)
+    rank_level = min(int(solved_count // problems_per_rank), len(RANKS) - 1)
+    rank_info = RANKS[rank_level]
+
+    user_badges_query = select(models.UserBadge).options(joinedload(models.UserBadge.badge)).where(models.UserBadge.user_id == user.id)
+    user_badges_result = await db.execute(user_badges_query)
+    earned_badges = [ub.badge for ub in user_badges_result.scalars().all()]
+
+    next_problem_url = "/"
+    all_chapters_result = await db.execute(select(models.Chapter).options(selectinload(models.Chapter.problems)).order_by(models.Chapter.language != user.last_language_slug, models.Chapter.id))
+    all_chapters = all_chapters_result.scalars().all()
+    
+    for chapter in all_chapters:
+        if not chapter.problems: continue
+        sorted_problems = sorted(chapter.problems, key=lambda p: p.problem_number_in_chapter)
+        for problem in sorted_problems:
+            if problem.id not in completed_problems_ids:
+                next_problem_url = f"/{chapter.language}/{chapter.slug}/{problem.problem_number_in_chapter}"
+                return {"username": user.username, "rank_info": rank_info, "next_problem_url": next_problem_url, "earned_badges": earned_badges}
+
+    return {"username": user.username, "rank_info": rank_info, "next_problem_url": next_problem_url, "earned_badges": earned_badges}
+
 
 @app.get("/api/overall-progress")
 async def get_overall_progress(db: AsyncSession = Depends(database.get_db), user: models.User = Depends(auth.get_current_user)):

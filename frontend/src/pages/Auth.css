@@ -5,7 +5,7 @@
 .auth-card label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #495057; }
 .auth-card .input-wrapper { position: relative; }
 .auth-card .input-wrapper .icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #adb5bd; font-size: 1.1rem; }
-.auth-card input { width: 100%; padding: 0.8rem 0.8rem 0.8rem 3rem; border-radius: 8px; border: 1px solid var(--medium-gray); box-sizing: border-box; font-size: 1rem; transition: border-color 0.2s, box-shadow 0.2s; }
+.auth-card input { width: 100%; padding: 0.8rem 0.8rem 0.8rem 0.8rem; border-radius: 8px; border: 1px solid var(--medium-gray); box-sizing: border-box; font-size: 1rem; transition: border-color 0.2s, box-shadow 0.2s; }
 .auth-card input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 4px #495057; }
 .auth-card button { width: 100%; margin-top: 1rem; padding: 0.875rem 1.25rem; font-size: 1.1rem; font-weight: 700; color: white; background: #495057; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s ease-out; }
 .auth-card button:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 4px 15px #495057; }

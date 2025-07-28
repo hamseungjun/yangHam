@@ -4,7 +4,7 @@ LESSONS_DATA = {
         "chapters": [
             {
                 "slug": "basics",
-                "chapter_title": "1. 파이썬 기초",
+                "chapter_title": "1. Python 기초",
                 "problems": [
                     {"problem_id": 1,"problem_title": "숫자와 연산","question": "`a` 변수에 10, `b` 변수에 3을 할당하고, 두 변수를 더한 값과 곱한 값을 각각 출력하세요.","theory": "<h4>숫자형 (Numeric Types)</h4><p>파이썬은 정수(<code>int</code>), 실수(<code>float</code>)와 같은 숫자 데이터를 다룰 수 있습니다. 기본적인 사칙연산(+, -, *, /)이 가능합니다.</p><pre><code class=\"language-python\">x = 10\ny = 3.14\nprint(x * y)</code></pre>"},
                     {"problem_id": 2,"problem_title": "문자열 다루기","question": "`hello` 변수에 \"Hello, \"를, `world` 변수에 \"World!\"를 할당하세요. 두 변수를 합쳐 \"Hello, World!\"를 출력하세요.","theory": "<h4>문자열 (String)</h4><p>따옴표(')나 쌍따옴표(\")로 감싸 텍스트 데이터를 만듭니다. `+` 연산자로 문자열을 이어붙일 수 있습니다.</p><pre><code class=\"language-python\">text1 = \"파이썬\"\ntext2 = \"안녕\"\nprint(text2 + \", \" + text1)</code></pre>"},
@@ -15,7 +15,7 @@ LESSONS_DATA = {
             },
             {
                 "slug": "control-flow",
-                "chapter_title": "2. 제어 흐름",
+                "chapter_title": "2. Python 제어 흐름",
                 "problems": [
                     { "problem_id": 1, "problem_title": "if-else 조건문", "question": "`temperature` 변수에 18을 할당하세요. 만약 온도가 20도 이상이면 \"덥다\"를, 그렇지 않으면 \"춥다\"를 출력하는 조건문을 만드세요.", "theory": "<h4>if-else 문</h4><p>조건의 참/거짓에 따라 다른 코드를 실행합니다.</p><pre><code class=\"language-python\">if 조건:\n    # 참일 때\nelse:\n    # 거짓일 때</code></pre>" },
                     { "problem_id": 2, "problem_title": "for 반복문", "question": "`range()` 함수와 `for` 반복문을 사용하여 1부터 5까지의 숫자를 순서대로 출력하세요.", "theory": "<h4>for 반복문</h4><p><code>range(1, 6)</code>은 1, 2, 3, 4, 5를 의미합니다.</p><pre><code class=\"language-python\">for i in range(3):\\n    print(\"반복\")</code></pre>" },
@@ -26,7 +26,7 @@ LESSONS_DATA = {
             },
             {
                 "slug": "data-structures",
-                "chapter_title": "3. 자료 구조",
+                "chapter_title": "3. Python 자료 구조",
                 "problems": [
                     { "problem_id": 1, "problem_title": "리스트(List) 생성과 추가", "question": "`fruits` 리스트에 \"사과\", \"바나나\"를 담아 생성하세요. 그 다음, `.append()` 메소드를 사용해 \"딸기\"를 리스트의 맨 뒤에 추가하고 리스트 전체를 출력하세요.", "theory": "<h4>리스트 (List)</h4><p>여러 항목을 순서대로 저장하는 가변적인 자료구조입니다.</p><pre><code class=\"language-python\">my_list = [1, 2]\\nmy_list.append(3)\\nprint(my_list)</code></pre>" },
                     { "problem_id": 2, "problem_title": "리스트 인덱싱", "question": "`animals` 리스트에 \"사자\", \"호랑이\", \"코끼리\"를 저장하세요. 인덱싱을 사용하여 두 번째 항목인 \"호랑이\"만 출력하세요.", "theory": "<h4>인덱싱 (Indexing)</h4><p>인덱스는 <strong>0부터 시작</strong>합니다.</p><pre><code class=\"language-python\">letters = ['a', 'b', 'c']\\nprint(letters[1])</code></pre>" },
@@ -37,7 +37,7 @@ LESSONS_DATA = {
             },
             {
                 "slug": "functions",
-                "chapter_title": "4. 함수",
+                "chapter_title": "4. Python 함수",
                 "problems": [
                     { "problem_id": 1, "problem_title": "함수 정의하기", "question": "`say_hello`라는 이름의 함수를 만드세요. 이 함수는 \"안녕하세요!\"라는 문자열을 출력해야 합니다. 함수를 만든 뒤, 직접 호출하여 실행해보세요.", "theory": "<h4>함수 정의 (def)</h4><p>특정 작업을 수행하는 코드 묶음을 만드는 것입니다.</p><pre><code class=\"language-python\">def my_function():\\n    print(\"함수 호출됨\")\\n\\nmy_function()</code></pre>" },
                     { "problem_id": 2, "problem_title": "매개변수(Parameter) 사용", "question": "`greet`이라는 이름의 함수를 만드세요. 이 함수는 `name`이라는 매개변수를 하나 받아, \"안녕, [name]!\" 형식으로 인사말을 출력해야 합니다. `greet(\"양햄이\")`를 호출하여 결과를 확인하세요.", "theory": "<h4>매개변수 (Parameter)</h4><p>함수를 호출할 때 추가적인 정보를 전달하기 위해 사용됩니다.</p><pre><code class=\"language-python\">def add(a, b):\\n    print(a + b)\\n\\nadd(5, 3)</code></pre>" },
