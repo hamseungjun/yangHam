@@ -6,7 +6,7 @@ import './Layout.css';
 import { LANGUAGES, DEFAULT_THEME } from '../config'; 
 
 const Layout = () => {
-  const [logoSrc, setLogoSrc] = useState('img/logo/basic_logo.png'); // 로고 이미지 경로 상태
+  const [logoSrc, setLogoSrc] = useState('/img/logo/basic_logo.png'); // 로고 이미지 경로 상태 (절대 경로로 수정)
   const [chapters, setChapters] = useState([]);
   const [user, setUser] = useState(null);
   const { language } = useParams(); // URL에서 현재 언어 slug를 가져옵니다.
@@ -23,12 +23,12 @@ const Layout = () => {
       root.style.setProperty('--primary-color', currentLang.color);
       root.style.setProperty('--primary-hover', currentLang.hover);
       // 해당 언어의 로고가 있다면 로고를 변경하고, 없다면 기본 로고를 사용합니다.
-      setLogoSrc(currentLang.logo || 'img/logo/basic_logo.png');
+      setLogoSrc(currentLang.logo ? `/${currentLang.logo}` : '/img/logo/basic_logo.png');
     } else {
       // 언어 선택 페이지 등 language가 없는 경우 기본 색상으로 되돌립니다.
       root.style.setProperty('--primary-color', DEFAULT_THEME.color);
       root.style.setProperty('--primary-hover', DEFAULT_THEME.hover);
-      setLogoSrc('img/logo/basic_logo.png'); // 기본 로고로 설정
+      setLogoSrc('/img/logo/basic_logo.png'); // 기본 로고로 설정 (절대 경로로 수정)
     }
   }, [language]); // 'language'가 바뀔 때마다 이 코드가 실행됩니다.
 
