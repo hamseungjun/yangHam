@@ -12,7 +12,6 @@ from sqlalchemy.orm import selectinload, joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 import base64
-# 로컬 파일 임포트
 
 
 
@@ -57,6 +56,7 @@ class LeaderboardEntrySchema(BaseModel):
     solved_count: int
     rank_name: str
     rank_image: str
+    earned_badges: List[BadgeSchema] = []
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
@@ -71,7 +71,6 @@ if GEMINI_API_KEY:
 
 
 
-# main.py의 check_and_award_badges 함수 전체를 교체
 
 async def check_and_award_badges(user: models.User, db: AsyncSession):
     # 사용자가 푼 모든 문제 ID 집합
@@ -185,7 +184,6 @@ origins = [
     # "http://localhost:5173", 
     # "http://localhost:5174"
     "https://yangham-frontend.onrender.com"
-    # 여기에 배포된 프론트엔드 주소 추가
 ]
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
@@ -316,6 +314,7 @@ async def get_leaderboard(db: AsyncSession = Depends(database.get_db)):
     # User 테이블과 위 서브쿼리를 조인하여 사용자 이름과 랭킹 데이터를 가져옴
     leaderboard_query = (
         select(
+            models.User.id.label("user_id"),
             models.User.username,
             progress_subquery.c.solved_count,
         )
@@ -329,6 +328,23 @@ async def get_leaderboard(db: AsyncSession = Depends(database.get_db)):
     result = await db.execute(leaderboard_query)
     leaderboard_data = result.all()
 
+    # 리더보드에 있는 사용자들의 ID를 추출
+    user_ids = [row.user_id for row in leaderboard_data]
+
+    # 사용자들의 배지 정보를 한 번에 가져옴
+    badges_by_user = {}
+    if user_ids:
+        user_badges_query = (
+            select(models.UserBadge)
+            .options(joinedload(models.UserBadge.badge))
+            .where(models.UserBadge.user_id.in_(user_ids))
+        )
+        user_badges_result = await db.execute(user_badges_query)
+        for ub in user_badges_result.scalars().all():
+            if ub.user_id not in badges_by_user:
+                badges_by_user[ub.user_id] = []
+            badges_by_user[ub.user_id].append(ub.badge)
+
     # 계급 계산 로직 추가
     total_problems_for_ranking = 80 
     problems_per_rank = total_problems_for_ranking / len(RANKS)
@@ -337,11 +353,13 @@ async def get_leaderboard(db: AsyncSession = Depends(database.get_db)):
     for i, row in enumerate(leaderboard_data):
         solved_count = row.solved_count
         rank_level = min(int(solved_count // problems_per_rank), len(RANKS) - 1)
-        rank_info = RANKS[rank_level]
+        rank_info = RANKS[rank_level ]
+        user_badges = badges_by_user.get(row.user_id, [])
         
         response_data.append(LeaderboardEntrySchema(
             rank=i + 1, username=row.username, solved_count=solved_count,
-            rank_name=rank_info["name"], rank_image=rank_info["image"]
+            rank_name=rank_info["name"], rank_image=rank_info["image"],
+            earned_badges=[BadgeSchema.from_orm(b) for b in user_badges]
         ))
     return response_data
 

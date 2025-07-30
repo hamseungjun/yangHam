@@ -49,10 +49,23 @@ const LeaderboardPage = () => {
                             {getMedal(user.rank) || user.rank}
                         </span>
                         <div className="rank-user-info">
-                            <img src={`img/${user.rank_image}`} alt={user.rank_name} className="rank-icon" />
+                            <img src={`/img/${user.rank_image}`} alt={user.rank_name} className="rank-icon" />
                             <span className="rank-username">{user.username}</span>
                         </div>
-                        <span className="rank-name">{user.rank_name}</span>
+                        <div className="rank-details">
+                            <div className="rank-badges">
+                                {user.earned_badges && user.earned_badges.map(badge => (
+                                    <img 
+                                        key={badge.id} 
+                                        src={`/img/${badge.image}`} 
+                                        alt={badge.name} 
+                                        title={`${badge.name}: ${badge.description}`}
+                                        className="rank-badge-icon"
+                                    />
+                                ))}
+                            </div>
+                            <span className="rank-name">{user.rank_name}</span>
+                        </div>
                     </div>
                 ))}
             </div>

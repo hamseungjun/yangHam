@@ -74,6 +74,29 @@
     font-weight: 500;
 }
 
+/* --- 추가된 스타일 --- */
+.rank-details {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.rank-badges {
+    display: flex;
+    gap: 0.5rem;
+    flex-direction: row-reverse; /* 배지가 오른쪽에 쌓이도록 */
+}
+
+.rank-badge-icon {
+    width: 30px;
+    height: 30px;
+    transition: transform 0.2s ease;
+}
+
+.rank-badge-icon:hover {
+    transform: scale(1.2);
+}
+
 /* Top 3 special effects */
 .leaderboard-item.rank-1 { border-color: #FFD700; background-color: #fffaf0; }
 .leaderboard-item.rank-2 { border-color: #C0C0C0; background-color: #f5f5f5; }
