@@ -7,12 +7,15 @@ import time
 from fastapi import FastAPI, Request, Form, Depends, HTTPException, status, Response
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import select, func
+from sqlalchemy import select, func, desc, asc
 from sqlalchemy.orm import selectinload, joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 import base64
 # 로컬 파일 임포트
+
+
+
 import auth
 import models
 import database
@@ -46,6 +49,14 @@ class BadgeSchema(BaseModel):
     description: str
     image: str
     class Config: from_attributes = True
+
+# --- 리더보드용 스키마 추가 ---
+class LeaderboardEntrySchema(BaseModel):
+    rank: int
+    username: str
+    solved_count: int
+    rank_name: str
+    rank_image: str
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
@@ -141,10 +152,10 @@ async def create_db_and_tables():
             print("DB에 기본 배지 데이터 주입...")
             badges_to_add = [
                 # --- 새로 추가할 언어 마스터 배지 ---
-                models.Badge(name="파이썬 마스터", description="파이썬의 모든 챕터를 완료했습니다.", image="badge_python_master.png", criteria_type="language_master", criteria_value="python"),
-                models.Badge(name="자바스크립트 마스터", description="자바스크립트의 모든 챕터를 완료했습니다.", image="badge_js_master.png", criteria_type="language_master", criteria_value="javascript"),
-                models.Badge(name="C 마스터", description="C언어의 모든 챕터를 완료했습니다.", image="badge_c_master.png", criteria_type="language_master", criteria_value="c"),
-                models.Badge(name="자바 마스터", description="자바의 모든 챕터를 완료했습니다.", image="badge_java_master.png", criteria_type="language_master", criteria_value="java"),
+                models.Badge(name="파이썬 마스터", description="파이썬의 모든 챕터를 완료했습니다.", image="badge/python_master.png", criteria_type="language_master", criteria_value="python"),
+                models.Badge(name="자바스크립트 마스터", description="자바스크립트의 모든 챕터를 완료했습니다.", image="badge/js_master.png", criteria_type="language_master", criteria_value="javascript"),
+                models.Badge(name="C 마스터", description="C언어의 모든 챕터를 완료했습니다.", image="badge/c_master.png", criteria_type="language_master", criteria_value="c"),
+                models.Badge(name="자바 마스터", description="자바의 모든 챕터를 완료했습니다.", image="badge/java_master.png", criteria_type="language_master", criteria_value="java"),
             ]
             session.add_all(badges_to_add)
             await session.commit()
@@ -172,8 +183,8 @@ RANKS = {
 # --- CORS 미들웨어 설정 ---
 origins = [
     "http://localhost:5173", 
-    "http://localhost:5174",
-    "https://yangham-frontend.onrender.com"
+    "http://localhost:5174"
+    # "https://yangham-frontend.onrender.com"
     # 여기에 배포된 프론트엔드 주소 추가
 ]
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
@@ -284,6 +295,55 @@ Respond in a JSON format with two keys: "is_correct" (boolean) and "feedback" (s
             
     return {"is_correct": is_correct, "feedback": feedback}
 
+@app.get("/api/leaderboard", response_model=List[LeaderboardEntrySchema])
+async def get_leaderboard(db: AsyncSession = Depends(database.get_db)):
+    """
+    문제 해결 수를 기준으로 사용자 순위를 매기는 리더보드 데이터를 반환합니다.
+    - 1순위: 푼 문제 수가 많은 순서 (내림차순)
+    - 2순위 (동점일 경우): 마지막 문제를 먼저 푼 순서 (오름차순)
+    """
+    # 각 사용자별로 푼 문제 수와 마지막으로 푼 문제의 시간을 계산하는 서브쿼리
+    progress_subquery = (
+        select(
+            models.UserProgress.user_id,
+            func.count(models.UserProgress.problem_id).label("solved_count"),
+            func.max(models.UserProgress.completed_at).label("last_solved_at")
+        )
+        .group_by(models.UserProgress.user_id)
+        .subquery()
+    )
+
+    # User 테이블과 위 서브쿼리를 조인하여 사용자 이름과 랭킹 데이터를 가져옴
+    leaderboard_query = (
+        select(
+            models.User.username,
+            progress_subquery.c.solved_count,
+        )
+        .join(progress_subquery, models.User.id == progress_subquery.c.user_id)
+        .order_by(
+            desc(progress_subquery.c.solved_count), # 1. 푼 문제 수로 내림차순 정렬
+            asc(progress_subquery.c.last_solved_at)   # 2. 마지막 해결 시간으로 오름차순 정렬
+        )
+    )
+
+    result = await db.execute(leaderboard_query)
+    leaderboard_data = result.all()
+
+    # 계급 계산 로직 추가
+    total_problems_for_ranking = 80 
+    problems_per_rank = total_problems_for_ranking / len(RANKS)
+
+    response_data = []
+    for i, row in enumerate(leaderboard_data):
+        solved_count = row.solved_count
+        rank_level = min(int(solved_count // problems_per_rank), len(RANKS) - 1)
+        rank_info = RANKS[rank_level]
+        
+        response_data.append(LeaderboardEntrySchema(
+            rank=i + 1, username=row.username, solved_count=solved_count,
+            rank_name=rank_info["name"], rank_image=rank_info["image"]
+        ))
+    return response_data
 
 @app.get("/api/dashboard/{language}")
 async def get_dashboard_data(language: str, db: AsyncSession = Depends(database.get_db), user: models.User = Depends(auth.get_current_user)):

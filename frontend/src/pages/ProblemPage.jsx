@@ -55,7 +55,6 @@ const ProblemPage = () => {
             formData.append('user_code', userCode);
             const res = await api.post(`/check-answer/${language}/${chapterSlug}/${problemId}`, formData);
             
-            // execution_output 없이 feedback 상태만 설정합니다.
             setFeedback(res.data);
             
             if (res.data.is_correct) {
@@ -70,7 +69,6 @@ const ProblemPage = () => {
             }
         } catch (error) {
             console.error("API 요청 실패:", error);
-            // 에러 발생 시 피드백 창에 메시지를 표시합니다.
             setFeedback({
                 is_correct: false,
                 feedback: "채점 서버와 통신하는 데 실패했습니다. 잠시 후 다시 시도해주세요."
@@ -90,6 +88,10 @@ const ProblemPage = () => {
     const completedCount = chapter.problems.filter(p => completed_problem_ids.includes(p.id)).length;
     const progressPercent = total_problems > 0 ? (completedCount / total_problems) * 100 : 0;
     
+    // 다음 문제로 가는 URL을 미리 만들어 둡니다.
+    const nextProblemUrl = `/${language}/${chapterSlug}/${currentProblemNum + 1}`;
+    const isLastProblem = currentProblemNum >= total_problems;
+
     return (
         <div className="problem-container">
             <aside className="theory-sidebar">
@@ -111,7 +113,7 @@ const ProblemPage = () => {
                                 이전 문제
                             </Link>
                             <span className="current-step">{currentProblemNum} / {total_problems}</span>
-                            <Link to={`/${language}/${chapterSlug}/${currentProblemNum + 1}`} className={`step-button ${currentProblemNum >= total_problems ? 'disabled' : ''}`}>
+                            <Link to={nextProblemUrl} className={`step-button ${isLastProblem ? 'disabled' : ''}`}>
                                 다음 문제
                             </Link>
                         </div>
@@ -142,14 +144,29 @@ const ProblemPage = () => {
                             theme="light"
                         />
                     </div>
+                    
+                    {/* --- 이 버튼 영역 전체가 수정되었습니다 --- */}
                     <div className="button-area">
-                        <button onClick={handleCheckAnswer} disabled={isChecking}>
-                            {isChecking ? '채점 중...' : '정답 확인하기'}
-                        </button>
+                        {feedback && feedback.is_correct ? (
+                            // 정답을 맞혔을 때:
+                            isLastProblem ? (
+                                // 마지막 문제인 경우
+                                <button disabled className="next-problem-btn">챕터 완료!</button>
+                            ) : (
+                                // 마지막 문제가 아닌 경우
+                                <Link to={nextProblemUrl} className="next-problem-btn">
+                                    다음 문제로 →
+                                </Link>
+                            )
+                        ) : (
+                            // 기본 상태 (채점 전 또는 오답)
+                            <button onClick={handleCheckAnswer} disabled={isChecking}>
+                                {isChecking ? '채점 중...' : '정답 확인하기'}
+                            </button>
+                        )}
                     </div>
+                    {/* ------------------------------------ */}
                 </div>
-
-                {/* 실행 결과(executionOutput) 섹션이 완전히 제거되었습니다. */}
 
                 {feedback && (
                     <div className={`result-box ${feedback.is_correct ? 'feedback-correct' : 'feedback-incorrect'}`}>

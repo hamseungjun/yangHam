@@ -7,6 +7,7 @@ import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import HomePage from './pages/HomePage';
 import LanguageSelectionPage from './pages/LanguageSelectionPage';
+import LeaderboardPage from './pages/LeaderboardPage';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           
           {/* --- 로그인이 필요한 보호된 페이지들 --- */}
           <Route element={<ProtectedRoute />}>
+            <Route path="leaderboard" element={<LeaderboardPage />} />
             <Route path=":language" element={<HomePage />} />
             <Route path=":language/:chapterSlug/:problemId" element={<ProblemPage />} />
           </Route>

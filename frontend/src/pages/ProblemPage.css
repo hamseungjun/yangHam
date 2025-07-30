@@ -245,3 +245,30 @@
     .problem-area { padding: 2rem 2.5rem; }
     .problem-area h2 { font-size: 2rem; }
 }
+
+
+/* --- 다음 문제 버튼 (새로 추가) --- */
+.next-problem-area {
+    margin-top: 1.5rem; /* AI 피드백과의 간격 */
+    padding-top: 1.5rem; /* AI 피드백과의 간격 */
+    border-top: 1px solid var(--medium-gray); /* 구분선 */
+    text-align: center; /* 버튼 가운데 정렬 */
+}
+
+.next-problem-btn {
+    display: inline-block;
+    background-color: var(--success-color); /* 성공/진행을 의미하는 녹색 */
+    color: white;
+    text-decoration: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.2s ease-in-out;
+    border: none;
+}
+
+.next-problem-btn:hover {
+    transform: translateY(-2px); /* 마우스를 올리면 살짝 위로 이동 */
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4); /* 그림자 효과 */
+}

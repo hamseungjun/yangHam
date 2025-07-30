@@ -6,11 +6,12 @@ import './Layout.css';
 import { LANGUAGES, DEFAULT_THEME } from '../config'; 
 
 const Layout = () => {
+  const [logoSrc, setLogoSrc] = useState('img/logo/basic_logo.png'); // 로고 이미지 경로 상태
   const [chapters, setChapters] = useState([]);
   const [user, setUser] = useState(null);
   const { language } = useParams(); // URL에서 현재 언어 slug를 가져옵니다.
 
-  // 2. 언어가 바뀔 때마다 테마 색상을 변경하는 로직
+  // 2. 언어가 바뀔 때마다 테마 색상과 로고를 변경하는 로직
   useEffect(() => {
     // 현재 URL의 language slug와 일치하는 언어 정보를 찾습니다.
     const currentLang = LANGUAGES.find(lang => lang.slug === language);
@@ -21,10 +22,13 @@ const Layout = () => {
       // 일치하는 언어가 있으면 해당 언어의 색상으로 CSS 변수를 설정합니다.
       root.style.setProperty('--primary-color', currentLang.color);
       root.style.setProperty('--primary-hover', currentLang.hover);
+      // 해당 언어의 로고가 있다면 로고를 변경하고, 없다면 기본 로고를 사용합니다.
+      setLogoSrc(currentLang.logo || 'img/logo/basic_logo.png');
     } else {
       // 언어 선택 페이지 등 language가 없는 경우 기본 색상으로 되돌립니다.
       root.style.setProperty('--primary-color', DEFAULT_THEME.color);
       root.style.setProperty('--primary-hover', DEFAULT_THEME.hover);
+      setLogoSrc('img/logo/basic_logo.png'); // 기본 로고로 설정
     }
   }, [language]); // 'language'가 바뀔 때마다 이 코드가 실행됩니다.
 
@@ -66,6 +70,7 @@ const Layout = () => {
           {user ? (
             <>
               <span>환영합니다, <strong>{user.username}</strong>님!</span>
+              <Link to={`/leaderboard`}>리더보드</Link>
               <Link to={`/`}>학습 홈</Link>
               <button onClick={handleLogout} className="logout-button">로그아웃</button>
             </>
@@ -79,7 +84,7 @@ const Layout = () => {
       </div>
       <header className="top-nav">
         <Link to="/" className="logo-link">
-            <img src="/final_logo.png" alt="양햄이 코딩스쿨 로고" className="logo" />
+            <img src={logoSrc} alt="양햄이 코딩스쿨 로고" className="logo" />
         </Link>
         {language && chapters.length > 0 && (
             <nav className="nav">
